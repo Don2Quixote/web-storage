@@ -3,6 +3,7 @@ Little web service to store you files at
 
 ## Installation
 Installed Go compiler required to compile or run code
+
 Firstly, download project:
 ```bash
 git clone https://github.com/Don2Quixote/web-storage

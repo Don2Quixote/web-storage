@@ -35,10 +35,7 @@ func init() {
 }
 
 func main() {
-	router := ninja.CreateRouter(100, 100)
-	// router.SetMiddlewire("", ninja.ThroughMiddlewire(func(w http.ResponseWriter, r *http.Request) {
-	// 	fmt.Println(r.URL.Path)
-	// }))
+	router := ninja.CreateRouter(7, 0)
 
 	static := http.FileServer(http.Dir("content"))
 	router.Handle("/object/", http.StripPrefix("/object", http.HandlerFunc(handleObjectRequest))).Methods("GET")
