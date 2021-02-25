@@ -1,0 +1,8 @@
+{
+    "databaseUser": "",
+    "databasePass": "",
+    "databaseHost": "localhost",
+    "databasePort": "3306",
+    "databaseName": "storage",
+    "port": "80"
+}
