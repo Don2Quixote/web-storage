@@ -1,4 +1,4 @@
-# Storage
+# web-storage
 Little web service to store you files at
 
 ## Installation
