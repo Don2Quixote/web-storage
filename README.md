@@ -20,7 +20,7 @@ Then build:
 go build -o ./web-storage src/*.go
 ```
 
-# Configurating
+## Configurating
 Edit file `config.json`. It's easy to understand what to input
 
 ## Launching
