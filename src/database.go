@@ -24,10 +24,11 @@ const (
 )
 
 type object struct {
-	Id       string     `json:"id"`
-	Filename string     `json:"filename"`
-	Size     int        `json:"size"`
-	Type     objectType `json:"type"`
+	Id        string     `json:"id"`
+	Filename  string     `json:"filename"`
+	Size      int64      `json:"size"`
+	Type      objectType `json:"type"`
+	Downloads int        `json:"downlaods"`
 }
 
 func openSqlConnection() (*DB, error) {
@@ -44,7 +45,8 @@ func (db *DB) initDatabase() error {
 		"id VARCHAR(16) PRIMARY KEY, " +
 		"name VARCHAR(64) DEFAULT 'object' NOT NULL, " +
 		"size INT NOT NULL, " +
-		"type ENUM('zip', 'doc', 'code', 'bin', 'pdf', 'image', 'audio', 'video', 'txt') DEFAULT 'bin' NOT NULL " +
+		"type ENUM('zip', 'doc', 'code', 'bin', 'pdf', 'image', 'audio', 'video', 'txt') DEFAULT 'bin' NOT NULL, " +
+		"downloads INT DEFAULT 0 NOT NULL " +
 		")"
 	_, err := db.Exec(query)
 	if err != nil {
@@ -54,50 +56,54 @@ func (db *DB) initDatabase() error {
 	return nil
 }
 
-func (db *DB) addObject(id string, name string, size int, t objectType) error {
+func (db *DB) addObject(id string, name string, size int64, t objectType) error {
 	query := "INSERT INTO objects " +
 		"(id, name, size, type) " +
 		"VALUES (?, ?, ?, ?)"
 	_, err := db.Exec(query, id, name, size, t)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (db *DB) getObject(objectId string) (object, error) {
-	query := "SELECT name, size, type " +
+	query := "SELECT name, size, type, downloads " +
 		"FROM objects " +
 		"WHERE id = ? " +
 		"LIMIT 1"
 	row := db.QueryRow(query, objectId)
 
 	var (
-		filename string
-		size     int
-		objType  objectType
+		filename  string
+		size      int64
+		objType   objectType
+		downloads int
 	)
-	err := row.Scan(&filename, &size, &objType)
+	err := row.Scan(&filename, &size, &objType, &downloads)
 	if err != nil {
 		return object{}, err
 	}
 
 	return object{
-		Id:       objectId,
-		Filename: filename,
-		Size:     size,
-		Type:     objType,
+		Id:        objectId,
+		Filename:  filename,
+		Size:      size,
+		Type:      objType,
+		Downloads: downloads,
 	}, nil
+}
+
+func (db *DB) increaseDownloadsCounts(objectId string) error {
+	query := "UPDATE objects " +
+		"SET downloads = downloads + 1 " +
+		"WHERE id = ? " +
+		"LIMIT 1"
+	_, err := db.Exec(query, objectId)
+	return err
 }
 
 func (db *DB) removeObject(objectId string) error {
 	query := "DELETE FROM objects " +
-		"WHERE id = ?"
+		"WHERE id = ? " +
+		"LIMIT 1"
 	_, err := db.Exec(query, objectId)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
