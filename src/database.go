@@ -28,7 +28,7 @@ type object struct {
 	Filename  string     `json:"filename"`
 	Size      int64      `json:"size"`
 	Type      objectType `json:"type"`
-	Downloads int        `json:"downlaods"`
+	Downloads int        `json:"downloads"`
 }
 
 func openSqlConnection() (*DB, error) {
