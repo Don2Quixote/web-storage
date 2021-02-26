@@ -37,6 +37,8 @@ function createNewFileInput() {
 
 window.addEventListener('load', async function() {
     let filenameElement = document.getElementById('filename');
+    let filesizeElement = document.getElementById('filesize-value');
+    let downloadsCountElement = document.getElementById('downloads-count-value');
     let iconImageElement = document.getElementById('icon-image');
     let downloadButton = document.getElementById('download-button');
     let createButton = document.getElementById('create-button');
@@ -60,6 +62,8 @@ window.addEventListener('load', async function() {
     window.title = `Object ${object.id} | Storage`;
 
     filenameElement.innerText = object.filename;
+    filesizeElement.innerText = humanReadableSize(object.size);
+    downloadsCountElement.innerText = object.downloads.toString();
 
     iconImageElement.src = '/getIconByObjectType?type=' + object.type;
     iconImageElement.addEventListener('loal', function() {
@@ -98,6 +102,16 @@ window.addEventListener('load', async function() {
     });
 });
 
+function humanReadableSize(size) {
+    if (size < 1024 * 1024) {
+        return (size / 1024).toFixed(2) + 'Kb';
+    } else if (size < 1024 * 1024 * 1024) {
+        return (size / 1024 / 1024).toFixed(2) + 'Mb';
+    } else {
+        return (size / 1024 / 1024 / 1024).toFixed(2) + 'Gb';
+    }
+}
+
 async function getObjectMetadata(id) {
     let response = await fetch(`/getObjectMetadata?id=${id}`, {
         method: 'GET'
@@ -112,6 +126,7 @@ async function getObjectMetadata(id) {
 
     return data.object;
 }
+
 function createObject(filename, file) {
     return new Promise((resolve, reject) => {
         if (file.size > 1024 * 1024 * 1024) {
