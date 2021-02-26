@@ -393,7 +393,7 @@ func handleDownloadObject(res http.ResponseWriter, req *http.Request) {
 	}
 	defer file.Close()
 
-	res.Header().Set("Content-Length", strconv.Itoa(object.Size))
+	res.Header().Set("Content-Length", strconv.FormatInt(object.Size, 10))
 	sentBytes, err := io.Copy(res, file)
 	if err != nil {
 		fmt.Println(err.Error())
