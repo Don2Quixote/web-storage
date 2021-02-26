@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -53,31 +52,34 @@ func main() {
 }
 
 func handleNotFound(res http.ResponseWriter, req *http.Request) {
-	file404, err := ioutil.ReadFile("content/html/404.html")
+	file404, err := os.Open("content/html/404.html")
 	if err != nil {
 		res.Write([]byte("404 NOT FOUND"))
 		return
 	}
+	defer file404.Close()
 
-	res.Write(file404)
+	io.Copy(res, file404)
 }
 
 func handleRootRequest(res http.ResponseWriter, req *http.Request) {
 	notFound := false
 	switch req.URL.Path {
 	case "/":
-		file, err := ioutil.ReadFile("content/html/index.html")
+		file, err := os.Open("content/html/index.html")
 		if err == nil {
-			res.Write(file)
+			io.Copy(res, file)
+			file.Close()
 			break
 		}
 		notFound = true
 		fallthrough
 	default:
 		if !notFound {
-			file, err := ioutil.ReadFile("content/html" + req.URL.Path + ".html")
+			file, err := os.Open("content/html" + req.URL.Path + ".html")
 			if err == nil {
-				res.Write(file)
+				io.Copy(res, file)
+				file.Close()
 				break
 			}
 		}
@@ -94,7 +96,7 @@ func handleCreateObject(res http.ResponseWriter, req *http.Request) {
 	}
 
 	contentLengthHeader := req.Header.Get("Content-Length")
-	contentLength, err := strconv.Atoi(contentLengthHeader)
+	contentLength, err := strconv.ParseInt(contentLengthHeader, 10, 64)
 	if err != nil {
 		responseStruct.Success = false
 		responseStruct.Error = "Invalid Content-Length header"
@@ -181,18 +183,15 @@ func handleCreateObject(res http.ResponseWriter, req *http.Request) {
 
 	var fileBegining []byte
 	buffer := make([]byte, 4096)
-	totalBytesRead := 0
+	totalBytesRead := int64(0)
 	for {
 		bytesRead, _ := req.Body.Read(buffer)
-		if bytesRead != 4096 {
-			fmt.Println("Bytes read != 4096. Its =", bytesRead)
-		}
 
 		if bytesRead == 0 {
 			break
 		}
 
-		totalBytesRead += bytesRead
+		totalBytesRead += int64(bytesRead)
 		if totalBytesRead > contentLength {
 			responseStruct.Success = false
 			responseStruct.Error = "Incorrect Content-Length header"
@@ -288,13 +287,14 @@ func handleObjectRequest(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	file, err := ioutil.ReadFile("content/html/object.html")
+	file, err := os.Open("content/html/object.html")
 	if err != nil {
 		handleNotFound(res, req)
 		return
 	}
+	defer file.Close()
 
-	res.Write(file)
+	io.Copy(res, file)
 }
 
 func handleGetObjectMetadata(res http.ResponseWriter, req *http.Request) {
@@ -391,8 +391,17 @@ func handleDownloadObject(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, "Not found", http.StatusNotFound)
 		return
 	}
+	defer file.Close()
 
-	io.Copy(res, file)
+	res.Header().Set("Content-Length", strconv.Itoa(object.Size))
+	sentBytes, err := io.Copy(res, file)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	if sentBytes == int64(object.Size) {
+		db.increaseDownloadsCounts(object.Id)
+	}
 }
 
 func sendJSON(res http.ResponseWriter, data interface{}) {
