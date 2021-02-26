@@ -212,10 +212,10 @@ function downloadObject(object) {
     };
 
     xhr.onerror = function(e) {
-        openPopup("Error", "Unknown error. May be lost Internet connection?", {
+        openPopup("Error", "Unknown error. May be lost Internet connection?", [{
             text: 'Ok',
             onclick: closePopup
-        });
+        }]);
     };
 
     xhr.send();
